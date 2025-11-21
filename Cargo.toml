@@ -1,20 +1,12 @@
 [package]
 name = "polymarket-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Pawsengineer <play.pawsengineer@gmail.com>"]
 description = "Rust client library for the Polymarket CLOB and Data API"
 license = "MIT"
 repository = "https://github.com/pawsengineer/polymarket-rs"
-keywords = [
-    "polymarket",
-    "clob",
-    "client",
-    "prediction-markets",
-    "polygon",
-    "ethereum",
-    "trading",
-]
+keywords = ["polymarket", "api", "clob", "client", "prediction-markets"]
 categories = ["api-bindings", "cryptography::cryptocurrencies"]
 
 [dependencies]
@@ -39,6 +31,7 @@ serde_json = "1.0"
 
 # Decimal math
 rust_decimal = { version = "1.36.0", features = ["serde-str"] }
+rust_decimal_macros = "1.20.0"
 
 # Cryptography
 hmac = "0.12"

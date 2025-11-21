@@ -1,11 +1,11 @@
 use crate::error::Result;
 use crate::http::{create_l2_headers, HttpClient};
-use crate::orders::OrderBuilder;
+use crate::orders::{calculate_market_price, OrderBuilder};
 use crate::signing::EthSigner;
 use crate::types::{
-    ApiCreds, CancelOrdersResponse, CreateOrderOptions, ExtraOrderArgs, MarketOrderArgs,
-    OpenOrder, OpenOrderParams, OpenOrdersResponse, OrderArgs, OrderBookSummary, OrderId,
-    OrderType, PostOrder, PostOrderResponse, Side, SignedOrderRequest, TradeParams,
+    ApiCreds, CancelOrdersResponse, CreateOrderOptions, ExtraOrderArgs, MarketOrderArgs, OpenOrder,
+    OpenOrderParams, OpenOrdersResponse, OrderArgs, OrderBookSummary, OrderId, OrderType,
+    PostOrder, PostOrderResponse, Side, SignedOrderRequest, TradeParams,
 };
 
 /// Client for trading operations
@@ -91,9 +91,7 @@ impl TradingClient {
         };
 
         // Calculate market price from order book
-        let price = self
-            .order_builder
-            .calculate_market_price(book_side, order_args.amount)?;
+        let price = calculate_market_price(book_side, order_args.amount, order_args.side)?;
 
         self.order_builder
             .create_market_order(self.chain_id, order_args, price, extras, options)

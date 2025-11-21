@@ -1,6 +1,6 @@
-use crate::OrderId;
-
 use super::enums::{OrderType, Side};
+use crate::error::Result;
+use crate::{orders::calculate_market_price, OrderId};
 use alloy_primitives::U256;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -239,54 +239,15 @@ pub struct OrderBookSummary {
 }
 
 impl OrderBookSummary {
-    pub fn estimate_filled_price_for_bid(&self, size: Decimal) -> Option<Decimal> {
-        let mut remaining_size = size;
-        let mut total_cost = Decimal::ZERO;
-
-        // sort asks from lowest to highest price
-        let mut sorted_asks = self.asks.clone();
-        sorted_asks.sort_by(|a, b| a.price.cmp(&b.price));
-
-        for order in &sorted_asks {
-            if remaining_size <= Decimal::ZERO {
-                break;
-            }
-
-            let trade_size = remaining_size.min(order.size);
-            total_cost += trade_size * order.price;
-            remaining_size -= trade_size;
-        }
-
-        if remaining_size > Decimal::ZERO {
-            None
-        } else {
-            Some(total_cost / size)
-        }
-    }
-
-    pub fn estimate_filled_price_for_ask(&self, size: Decimal) -> Option<Decimal> {
-        let mut remaining_size = size;
-        let mut total_cost = Decimal::ZERO;
-
-        // sort bids from highest to lowest price
-        let mut sorted_bids = self.bids.clone();
-        sorted_bids.sort_by(|a, b| b.price.cmp(&a.price));
-
-        for order in &sorted_bids {
-            if remaining_size <= Decimal::ZERO {
-                break;
-            }
-
-            let trade_size = remaining_size.min(order.size);
-            total_cost += trade_size * order.price;
-            remaining_size -= trade_size;
-        }
-
-        if remaining_size > Decimal::ZERO {
-            None
-        } else {
-            Some(total_cost / size)
-        }
+    pub fn calculate_market_price(&self, side: Side, shares_to_match: Decimal) -> Result<Decimal> {
+        calculate_market_price(
+            match side {
+                Side::Buy => &self.asks,
+                Side::Sell => &self.bids,
+            },
+            shares_to_match,
+            side,
+        )
     }
 }
 

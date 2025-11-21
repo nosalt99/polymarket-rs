@@ -3,8 +3,8 @@ use crate::config::get_contract_config;
 use crate::error::{Error, Result};
 use crate::signing::{sign_order_message, EthSigner, Order};
 use crate::types::{
-    CreateOrderOptions, ExtraOrderArgs, MarketOrderArgs, OrderArgs, OrderSummary, Side,
-    SignatureType, SignedOrderRequest,
+    CreateOrderOptions, ExtraOrderArgs, MarketOrderArgs, OrderArgs, Side, SignatureType,
+    SignedOrderRequest,
 };
 use crate::utils::get_current_unix_time_secs;
 use alloy_primitives::{Address, U256};
@@ -121,30 +121,6 @@ impl OrderBuilder {
                 )
             }
         }
-    }
-
-    /// Calculate the price for a market order based on order book depth
-    ///
-    /// This walks the order book until enough liquidity is found to match
-    /// the requested amount.
-    pub fn calculate_market_price(
-        &self,
-        positions: &[OrderSummary],
-        amount_to_match: Decimal,
-    ) -> Result<Decimal> {
-        let mut sum = Decimal::ZERO;
-
-        for p in positions {
-            sum += p.size * p.price;
-            if sum >= amount_to_match {
-                return Ok(p.price);
-            }
-        }
-
-        Err(Error::InvalidOrder(format!(
-            "Not enough liquidity to create market order with amount {}",
-            amount_to_match
-        )))
     }
 
     /// Create a market order
