@@ -1,6 +1,7 @@
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
+use super::order::PriceLevel;
 use super::Side;
 
 // ============================================================================
@@ -41,17 +42,6 @@ pub struct BookEvent {
     /// Last trade price (optional)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_trade_price: Option<String>,
-}
-
-/// Price level in order book (price and size pair)
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct PriceLevel {
-    /// Price at this level
-    #[serde(with = "rust_decimal::serde::str")]
-    pub price: Decimal,
-    /// Total size available at this price
-    #[serde(with = "rust_decimal::serde::str")]
-    pub size: Decimal,
 }
 
 /// Incremental order book update event

@@ -226,6 +226,17 @@ impl OpenOrderParams {
     }
 }
 
+/// Price level in order book (price and size pair)
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct PriceLevel {
+    /// Price at this level
+    #[serde(with = "rust_decimal::serde::str")]
+    pub price: Decimal,
+    /// Total size available at this price
+    #[serde(with = "rust_decimal::serde::str")]
+    pub size: Decimal,
+}
+
 /// Order book summary with bids and asks
 #[derive(Debug, Deserialize)]
 pub struct OrderBookSummary {
@@ -234,8 +245,8 @@ pub struct OrderBookSummary {
     pub hash: String,
     #[serde(deserialize_with = "super::serde_helpers::deserialize_number_from_string")]
     pub timestamp: u64,
-    pub bids: Vec<OrderSummary>,
-    pub asks: Vec<OrderSummary>,
+    pub bids: Vec<PriceLevel>,
+    pub asks: Vec<PriceLevel>,
 }
 
 impl OrderBookSummary {
@@ -249,15 +260,6 @@ impl OrderBookSummary {
             side,
         )
     }
-}
-
-/// Price and size at an order book level
-#[derive(Debug, Clone, Deserialize)]
-pub struct OrderSummary {
-    #[serde(with = "rust_decimal::serde::str")]
-    pub price: Decimal,
-    #[serde(with = "rust_decimal::serde::str")]
-    pub size: Decimal,
 }
 
 /// Parameters for querying order book
@@ -285,6 +287,19 @@ pub struct PostOrderResponse {
     pub order_id: OrderId,
     pub status: String,
     pub success: bool,
+}
+
+/// Arguments for posting multiple orders
+#[derive(Debug, Clone)]
+pub struct PostOrderArgs {
+    pub order: SignedOrderRequest,
+    pub order_type: OrderType,
+}
+
+impl PostOrderArgs {
+    pub fn new(order: SignedOrderRequest, order_type: OrderType) -> Self {
+        Self { order, order_type }
+    }
 }
 
 /// Response from canceling orders

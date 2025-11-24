@@ -5,7 +5,7 @@ use crate::signing::EthSigner;
 use crate::types::{
     ApiCreds, CancelOrdersResponse, CreateOrderOptions, ExtraOrderArgs, MarketOrderArgs, OpenOrder,
     OpenOrderParams, OpenOrdersResponse, OrderArgs, OrderBookSummary, OrderId, OrderType,
-    PostOrder, PostOrderResponse, Side, SignedOrderRequest, TradeParams,
+    PostOrder, PostOrderArgs, PostOrderResponse, Side, SignedOrderRequest, TradeParams,
 };
 
 /// Client for trading operations
@@ -119,6 +119,45 @@ impl TradingClient {
         )?;
         self.http_client
             .post("/order", &post_order, Some(headers))
+            .await
+    }
+
+    /// Post multiple orders to the exchange
+    ///
+    /// # Arguments
+    /// * `orders` - Slice of order arguments with their types
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use polymarket_rs::client::TradingClient;
+    /// # use polymarket_rs::types::{PostOrderArgs, OrderType};
+    /// # async fn example(trading_client: &TradingClient, order1: polymarket_rs::types::SignedOrderRequest, order2: polymarket_rs::types::SignedOrderRequest) -> polymarket_rs::Result<()> {
+    /// let results = trading_client.post_orders(&[
+    ///     PostOrderArgs::new(order1, OrderType::Gtc),
+    ///     PostOrderArgs::new(order2, OrderType::Gtc),
+    /// ]).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn post_orders(&self, orders: &[PostOrderArgs]) -> Result<Vec<PostOrderResponse>> {
+        let owner = self.api_creds.api_key.clone();
+
+        // Build array of PostOrder structs
+        let post_orders: Vec<PostOrder> = orders
+            .iter()
+            .map(|arg| PostOrder::new(arg.order.clone(), owner.clone(), arg.order_type))
+            .collect();
+
+        let headers = create_l2_headers(
+            &self.signer,
+            &self.api_creds,
+            "POST",
+            "/orders",
+            Some(&post_orders),
+        )?;
+
+        self.http_client
+            .post("/orders", &post_orders, Some(headers))
             .await
     }
 

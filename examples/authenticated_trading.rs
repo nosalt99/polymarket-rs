@@ -2,7 +2,7 @@ use alloy_signer_local::PrivateKeySigner;
 use polymarket_rs::client::{AuthenticatedClient, TradingClient};
 use polymarket_rs::orders::OrderBuilder;
 use polymarket_rs::types::{CreateOrderOptions, OrderArgs, Side, SignatureType};
-use polymarket_rs::Result;
+use polymarket_rs::{OrderType, Result};
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -66,45 +66,42 @@ async fn main() -> Result<()> {
         Side::Buy,
     );
 
-    let _options = CreateOrderOptions::default()
+    let options = CreateOrderOptions::default()
         .tick_size(Decimal::from_str("0.01").unwrap())
         .neg_risk(false);
 
-    // Note: This creates the order but doesn't post it
-    // Uncomment the following to actually post:
-    // let signed_order = trading_client.create_order(
-    //     &_order_args,
-    //     None,      // expiration (defaults to 0 = no expiration)
-    //     None,      // extras (defaults to ExtraOrderArgs::default())
-    //     _options,
-    // )?;
-    //
-    // println!("Created signed order with salt: {}", signed_order.salt);
-    //
-    // // Post the order
-    // let result = trading_client.post_order(signed_order, OrderType::Gtc).await?;
-    // println!("Order posted: {:?}", result);
+    let signed_order = trading_client.create_order(
+        &_order_args,
+        None, // expiration (defaults to 0 = no expiration)
+        None, // extras (defaults to ExtraOrderArgs::default())
+        options,
+    )?;
 
-    println!("Order creation example completed (not posted)");
+    println!("Created signed order with salt: {}", signed_order.salt);
+
+    // Post the order
+    let result = trading_client
+        .post_order(signed_order, OrderType::Gtc)
+        .await?;
+    println!("Order posted: {:?}", result);
 
     // Step 5: Cancel market orders (example - NOT executed)
     println!("\n5. Cancel market orders example...");
-    // Uncomment to cancel orders for a specific market:
-    // let result = trading_client.cancel_market_orders(Some("0xaaa"), None).await?;
+
+    // Cancel orders for a specific market:
+    let result = trading_client
+        .cancel_market_orders(Some("0xaaa"), None)
+        .await?;
     // Or cancel by asset_id:
     // let result = trading_client.cancel_market_orders(None, Some("100")).await?;
     // Or both:
     // let result = trading_client.cancel_market_orders(Some("0xaaa"), Some("100")).await?;
-    println!("Cancel market orders example completed (not executed)");
+    println!("Cancelled orders: {:?}", result);
 
     // Step 6: Get trade history
     println!("\n6. Fetching trade history...");
     let trades = trading_client.get_trades(Default::default()).await?;
     println!("Trade history: {:?}", trades);
-
-    println!("\n✓ Example completed successfully!");
-    println!("\nNOTE: This example did not post any actual orders.");
-    println!("Uncomment the posting code to execute real trades.");
 
     // ========================================================================
     // POLYPROXY WALLET EXAMPLE

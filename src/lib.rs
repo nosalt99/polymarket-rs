@@ -39,7 +39,7 @@ pub use alloy_signer_local::PrivateKeySigner;
 pub use error::{Error, Result};
 pub use types::{
     ApiCreds, AssetType, ConditionId, CreateOrderOptions, ExtraOrderArgs, MarketOrderArgs,
-    OrderArgs, OrderId, OrderType, Side, SignatureType, TokenId,
+    OrderArgs, OrderId, OrderType, PostOrderArgs, Side, SignatureType, TokenId,
 };
 
 // Re-export clients

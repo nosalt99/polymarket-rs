@@ -1,6 +1,7 @@
 use futures_util::StreamExt;
 use polymarket_rs::types::WsEvent;
-use polymarket_rs::websocket::MarketWsClient;
+use polymarket_rs::websocket::{MarketWsClient, ReconnectConfig, ReconnectingStream};
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,13 +13,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "87769991026114894163580777793845523168226980076553814689875238288185044414090".to_string(),
     ];
 
-    println!("Connecting to CLOB WebSocket...");
+    println!("Connecting to CLOB WebSocket with auto-reconnect...");
     println!("Subscribing to {} token(s)", token_ids.len());
 
-    // Subscribe to market updates
-    let (mut stream, _handle) = client.subscribe_with_handle(token_ids).await?;
+    // Configure reconnection behavior
+    let reconnect_config = ReconnectConfig {
+        initial_delay: Duration::from_secs(1),
+        max_delay: Duration::from_secs(30),
+        multiplier: 2.0,
+        max_attempts: None, // Infinite reconnection attempts
+    };
 
-    println!("✅ Connected successfully!");
+    // Create a reconnecting stream that will automatically reconnect on disconnection
+    let mut stream = ReconnectingStream::new(reconnect_config, move || {
+        let client = client.clone();
+        let token_ids = token_ids.clone();
+        async move {
+            println!("🔄 Connecting to WebSocket...");
+            let (stream, _handle) = client.subscribe_with_handle(token_ids).await?;
+            println!("✅ Connected successfully!");
+            Ok(stream)
+        }
+    });
+
     println!("Waiting for events...\n");
 
     // Process events as they arrive
@@ -79,8 +96,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Err(e) => {
-                log::warn!("❌ Error: {}", e);
-                break;
+                // With ReconnectingStream, errors are logged but the stream continues
+                // Only fatal errors (like max reconnection attempts) will terminate the stream
+                eprintln!("⚠️  Error: {} - Reconnecting...", e);
             }
         }
     }

@@ -1,5 +1,5 @@
 use crate::error::{Error, Result};
-use crate::types::OrderSummary;
+use crate::types::PriceLevel;
 use crate::Side;
 use rust_decimal::Decimal;
 
@@ -18,18 +18,18 @@ use rust_decimal::Decimal;
 /// # Example
 /// ```no_run
 /// use polymarket_rs::orders::calculate_market_price;
-/// use polymarket_rs::types::OrderSummary;
+/// use polymarket_rs::types::PriceLevel;
 /// use polymarket_rs::Side;
 /// use rust_decimal::Decimal;
 ///
 /// let positions = vec![
-///     OrderSummary { price: Decimal::new(50, 2), size: Decimal::new(100, 0) },
-///     OrderSummary { price: Decimal::new(51, 2), size: Decimal::new(200, 0) },
+///     PriceLevel { price: Decimal::new(50, 2), size: Decimal::new(100, 0) },
+///     PriceLevel { price: Decimal::new(51, 2), size: Decimal::new(200, 0) },
 /// ];
 /// let price = calculate_market_price(&positions, Decimal::new(150, 0), Side::Buy).unwrap();
 /// ```
 pub fn calculate_market_price(
-    positions: &[OrderSummary],
+    positions: &[PriceLevel],
     shares_to_match: Decimal,
     side: Side,
 ) -> Result<Decimal> {
@@ -72,8 +72,8 @@ mod tests {
     use super::*;
     use rust_decimal_macros::dec;
 
-    fn order(price: Decimal, size: Decimal) -> OrderSummary {
-        OrderSummary { price, size }
+    fn order(price: Decimal, size: Decimal) -> PriceLevel {
+        PriceLevel { price, size }
     }
 
     #[test]
