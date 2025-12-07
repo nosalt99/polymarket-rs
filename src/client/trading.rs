@@ -101,7 +101,7 @@ impl TradingClient {
     ///
     /// # Arguments
     /// * `order` - The signed order to post
-    /// * `order_type` - The order type (GTC, FOK, GTD)
+    /// * `order_type` - The order type (GTC, FOK, FAK, GTD)
     pub async fn post_order(
         &self,
         order: SignedOrderRequest,
@@ -170,7 +170,7 @@ impl TradingClient {
     /// * `expiration` - Optional expiration timestamp (defaults to 0 = no expiration)
     /// * `extras` - Optional extra order parameters (defaults to ExtraOrderArgs::default())
     /// * `options` - Order options (tick_size, neg_risk must be provided)
-    /// * `order_type` - The order type (GTC, FOK, GTD)
+    /// * `order_type` - The order type (GTC, FOK, FAK, GTD)
     pub async fn create_and_post_order(
         &self,
         order_args: &OrderArgs,

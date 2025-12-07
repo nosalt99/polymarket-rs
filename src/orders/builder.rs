@@ -11,7 +11,7 @@ use crate::utils::get_current_unix_time_secs;
 use alloy_primitives::{Address, U256};
 use rand::{thread_rng, Rng};
 use rust_decimal::Decimal;
-use rust_decimal::RoundingStrategy::{MidpointTowardZero, ToZero};
+use rust_decimal::RoundingStrategy::ToZero;
 use std::str::FromStr;
 
 /// Generate a random seed for order salt
@@ -66,7 +66,8 @@ impl OrderBuilder {
         price: Decimal,
         round_config: &RoundConfig,
     ) -> (u64, u64) {
-        let raw_price = price.round_dp_with_strategy(round_config.price, MidpointTowardZero);
+        // Use ToZero for prices to ensure they never round to 1.0 (invalid for prediction markets)
+        let raw_price = price.round_dp_with_strategy(round_config.price, ToZero);
 
         match side {
             Side::Buy => {
@@ -100,7 +101,8 @@ impl OrderBuilder {
         round_config: &RoundConfig,
     ) -> (u64, u64) {
         let raw_maker_amt = amount.round_dp_with_strategy(round_config.size, ToZero);
-        let raw_price = price.round_dp_with_strategy(round_config.price, MidpointTowardZero);
+        // Use ToZero for prices to ensure they never round to 1.0 (invalid for prediction markets)
+        let raw_price = price.round_dp_with_strategy(round_config.price, ToZero);
 
         let raw_taker_amt = match side {
             Side::Buy => raw_maker_amt / raw_price,
@@ -263,6 +265,7 @@ impl OrderBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloy_signer_local::PrivateKeySigner;
 
     #[test]
     fn test_generate_seed() {
@@ -270,5 +273,33 @@ mod tests {
         let seed2 = generate_seed().unwrap();
         // Seeds should be different (very unlikely to be the same)
         assert_ne!(seed1, seed2);
+    }
+
+    #[test]
+    fn test_price_0_999_does_not_round_to_1() {
+        // Create a test signer
+        let signer = PrivateKeySigner::random();
+        let builder = OrderBuilder::new(signer, None, None);
+
+        // Test with tick_size 0.1 (price rounds to 1 decimal)
+        let round_config = ROUNDING_CONFIG.get(&Decimal::from_str("0.1").unwrap()).unwrap();
+
+        let price = Decimal::from_str("0.999").unwrap();
+        let size = Decimal::from_str("30.0").unwrap();
+
+        let (maker_amount, taker_amount) =
+            builder.get_order_amounts(Side::Sell, size, price, round_config);
+
+        // Verify amounts are NOT equal (which would mean price = 1.0)
+        assert_ne!(
+            maker_amount, taker_amount,
+            "Price 0.999 should not round to 1.0, maker={} taker={}",
+            maker_amount, taker_amount
+        );
+
+        // With ToZero rounding, 0.999 -> 0.9 for tick_size 0.1
+        // So taker_amount should be size * 0.9 = 27.0 * 1e6 = 27000000
+        assert_eq!(maker_amount, 30_000_000);
+        assert_eq!(taker_amount, 27_000_000);
     }
 }

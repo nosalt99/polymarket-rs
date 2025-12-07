@@ -53,9 +53,12 @@ pub enum OrderType {
     /// Good till canceled
     #[serde(rename = "GTC")]
     Gtc,
-    /// Fill or kill
+    /// Fill or kill (must be fully filled)
     #[serde(rename = "FOK")]
     Fok,
+    /// Fill and kill (can be partially filled)
+    #[serde(rename = "FAK")]
+    Fak,
     /// Good till date
     #[serde(rename = "GTD")]
     Gtd,
