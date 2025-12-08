@@ -1,4 +1,4 @@
-use super::rounding::{decimal_to_token_u64, fix_amount_rounding, ROUNDING_CONFIG};
+use super::rounding::{decimal_to_token_u64, ROUNDING_CONFIG};
 use crate::config::get_contract_config;
 use crate::error::{Error, Result};
 use crate::orders::RoundConfig;
@@ -59,6 +59,13 @@ impl OrderBuilder {
     }
 
     /// Calculate order amounts for a limit order
+    ///
+    /// For buy orders:
+    /// - maker_amount (USDC) supports max 2 decimals
+    /// - taker_amount (outcome tokens) supports max 4 decimals
+    /// For sell orders:
+    /// - maker_amount (outcome tokens) supports max 4 decimals
+    /// - taker_amount (USDC) supports max 2 decimals
     fn get_order_amounts(
         &self,
         side: Side,
@@ -71,19 +78,18 @@ impl OrderBuilder {
 
         match side {
             Side::Buy => {
-                let raw_taker_amt = size.round_dp_with_strategy(round_config.size, ToZero);
-                let raw_maker_amt = raw_taker_amt * raw_price;
-                let raw_maker_amt = fix_amount_rounding(raw_maker_amt, round_config);
+                // For buy: maker_amount is USDC (max 2 decimals), taker_amount is tokens (max 4 decimals)
+                let raw_taker_amt = size.round_dp_with_strategy(4, ToZero);
+                let raw_maker_amt = (raw_taker_amt * raw_price).round_dp_with_strategy(2, ToZero);
                 (
                     decimal_to_token_u64(raw_maker_amt),
                     decimal_to_token_u64(raw_taker_amt),
                 )
             }
             Side::Sell => {
-                let raw_maker_amt = size.round_dp_with_strategy(round_config.size, ToZero);
-                let raw_taker_amt = raw_maker_amt * raw_price;
-                let raw_taker_amt = fix_amount_rounding(raw_taker_amt, round_config);
-
+                // For sell: maker_amount is tokens (max 4 decimals), taker_amount is USDC (max 2 decimals)
+                let raw_maker_amt = size.round_dp_with_strategy(4, ToZero);
+                let raw_taker_amt = (raw_maker_amt * raw_price).round_dp_with_strategy(2, ToZero);
                 (
                     decimal_to_token_u64(raw_maker_amt),
                     decimal_to_token_u64(raw_taker_amt),
@@ -313,7 +319,8 @@ mod tests {
         );
 
         // With ToZero rounding, 0.999 -> 0.9 for tick_size 0.1
-        // So taker_amount should be size * 0.9 = 27.0 * 1e6 = 27000000
+        // maker_amount = 30.0 tokens (max 4 decimals) = 30_000_000
+        // taker_amount = 30.0 * 0.9 = 27.0 USDC (max 2 decimals) = 27_000_000
         assert_eq!(maker_amount, 30_000_000);
         assert_eq!(taker_amount, 27_000_000);
     }
