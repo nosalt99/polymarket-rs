@@ -93,6 +93,13 @@ impl OrderBuilder {
     }
 
     /// Calculate order amounts for a market order
+    ///
+    /// For market buy orders:
+    /// - maker_amount (USDC) supports max 2 decimals
+    /// - taker_amount (outcome tokens) supports max 4 decimals
+    /// For market sell orders:
+    /// - maker_amount (outcome tokens) supports max 4 decimals
+    /// - taker_amount (USDC) supports max 2 decimals
     fn get_market_order_amounts(
         &self,
         side: Side,
@@ -100,21 +107,29 @@ impl OrderBuilder {
         price: Decimal,
         round_config: &RoundConfig,
     ) -> (u64, u64) {
-        let raw_maker_amt = amount.round_dp_with_strategy(round_config.size, ToZero);
         // Use ToZero for prices to ensure they never round to 1.0 (invalid for prediction markets)
         let raw_price = price.round_dp_with_strategy(round_config.price, ToZero);
 
-        let raw_taker_amt = match side {
-            Side::Buy => raw_maker_amt / raw_price,
-            Side::Sell => raw_maker_amt * raw_price,
-        };
-
-        let raw_taker_amt = fix_amount_rounding(raw_taker_amt, round_config);
-
-        (
-            decimal_to_token_u64(raw_maker_amt),
-            decimal_to_token_u64(raw_taker_amt),
-        )
+        match side {
+            Side::Buy => {
+                // For buy: maker_amount is USDC (max 2 decimals), taker_amount is tokens (max 4 decimals)
+                let raw_maker_amt = amount.round_dp_with_strategy(2, ToZero);
+                let raw_taker_amt = (raw_maker_amt / raw_price).round_dp_with_strategy(4, ToZero);
+                (
+                    decimal_to_token_u64(raw_maker_amt),
+                    decimal_to_token_u64(raw_taker_amt),
+                )
+            }
+            Side::Sell => {
+                // For sell: maker_amount is tokens (max 4 decimals), taker_amount is USDC (max 2 decimals)
+                let raw_maker_amt = amount.round_dp_with_strategy(4, ToZero);
+                let raw_taker_amt = (raw_maker_amt * raw_price).round_dp_with_strategy(2, ToZero);
+                (
+                    decimal_to_token_u64(raw_maker_amt),
+                    decimal_to_token_u64(raw_taker_amt),
+                )
+            }
+        }
     }
 
     /// Create a market order
