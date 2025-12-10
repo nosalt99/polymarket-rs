@@ -3,14 +3,6 @@
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
 
-> [!NOTE]
-> This library is under active development and considered alpha quality.
->
-> - Breaking changes may occur in future updates without prior notice
-> - API signatures, types, and module structures are subject to change
-> - Not recommended for production use yet
-> - Use at your own risk
-
 A modern, type-safe Rust client library for the [Polymarket](https://polymarket.com) CLOB (Central Limit Order Book) and Data API.
 
 This project is a complete rewrite of [polymarket-rs-client](https://github.com/TechieBoy/polymarket-rs-client) with improved ergonomics, additional API methods, and removal of generic type parameters for a cleaner API surface.
@@ -41,9 +33,10 @@ polymarket-rs = { git = "https://github.com/pawsengineer/polymarket-rs.git" }
 | Client                | Purpose                                     | Authentication            |
 | --------------------- | ------------------------------------------- | ------------------------- |
 | `ClobClient`          | CLOB market data queries                    | None                      |
+| `DataClient`          | Position and portfolio data                 | None                      |
+| `GammaClient`         | Market discovery and metadata               | None                      |
 | `AuthenticatedClient` | API key management, account operations      | L1 (EIP-712) or L2 (HMAC) |
 | `TradingClient`       | Order creation, cancellation, trade queries | L2 (HMAC)                 |
-| `DataClient`          | Position and portfolio data                 | None                      |
 
 ### Public Market Data
 
@@ -61,6 +54,35 @@ let book = client.get_order_book(&token_id).await?;
 ```
 
 See [`examples/clob_data.rs`](examples/clob_data.rs) and [`examples/public_data.rs`](examples/public_data.rs) for complete examples.
+
+### Market Discovery (Gamma API)
+
+Discover markets with rich metadata including events, categories, tags, and volume metrics:
+
+```rust
+use polymarket_rs::{GammaClient, request::GammaMarketParams};
+
+let client = GammaClient::new("https://gamma-api.polymarket.com");
+
+// Get active markets with filtering
+let params = GammaMarketParams::new()
+    .with_active(true)
+    .with_limit(10);
+let markets = client.get_markets(Some(params)).await?;
+
+// Get market by ID
+let market = client.get_market_by_id("646091").await?;
+
+// Get events, series, tags, and categories
+let events = client.get_events().await?;
+let series = client.get_series().await?;
+let tags = client.get_tags().await?;
+let categories = client.get_categories().await?;
+```
+
+The Gamma API provides comprehensive market metadata for discovery and filtering. All endpoints are public and require no authentication.
+
+See [`examples/gamma_markets.rs`](examples/gamma_markets.rs) for complete examples.
 
 ### Authenticated Trading
 
@@ -116,6 +138,9 @@ Run examples from the [`examples/`](examples/) directory:
 # Public market data
 cargo run --example clob_data
 cargo run --example public_data
+
+# Market discovery (Gamma API)
+cargo run --example gamma_markets
 
 # Authenticated trading
 PRIVATE_KEY="0x..." cargo run --example authenticated_trading

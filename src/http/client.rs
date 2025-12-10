@@ -20,11 +20,7 @@ impl HttpClient {
     }
 
     /// Make a GET request
-    pub async fn get<T>(
-        &self,
-        path: &str,
-        headers: Option<HashMap<&str, String>>,
-    ) -> Result<T>
+    pub async fn get<T>(&self, path: &str, headers: Option<HashMap<&str, String>>) -> Result<T>
     where
         T: DeserializeOwned,
     {
@@ -66,11 +62,7 @@ impl HttpClient {
     }
 
     /// Make a DELETE request with optional JSON body
-    pub async fn delete<T>(
-        &self,
-        path: &str,
-        headers: Option<HashMap<&str, String>>,
-    ) -> Result<T>
+    pub async fn delete<T>(&self, path: &str, headers: Option<HashMap<&str, String>>) -> Result<T>
     where
         T: DeserializeOwned,
     {
@@ -132,5 +124,4 @@ impl HttpClient {
             })
         }
     }
-
 }

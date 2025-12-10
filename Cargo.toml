@@ -1,9 +1,9 @@
 [package]
 name = "polymarket-rs"
-version = "0.1.6"
+version = "0.2.0"
 edition = "2021"
 authors = ["Pawsengineer <play.pawsengineer@gmail.com>"]
-description = "Rust client library for the Polymarket CLOB and Data API"
+description = "Rust client library for the Polymarket CLOB, Gamma, and Data API"
 license = "MIT"
 repository = "https://github.com/pawsengineer/polymarket-rs"
 keywords = ["polymarket", "api", "clob", "client", "prediction-markets"]
