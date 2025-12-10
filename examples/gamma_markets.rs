@@ -123,6 +123,22 @@ async fn main() -> Result<()> {
         }
     }
 
+    // Test 9: Get market by slug
+    println!("\n9. Fetching market by slug...");
+    match client
+        .get_market_by_slug("will-donald-trump-win-the-2024-us-presidential-election")
+        .await
+    {
+        Ok(market) => {
+            println!("   - Question: {}", market.question);
+            println!("   - Active: {}", market.active);
+            println!("   - Slug: {:?}", market.slug);
+        }
+        Err(e) => {
+            println!("Get market by slug error: {}", e);
+        }
+    }
+
     println!("\n=== All tests completed! ===");
     Ok(())
 }

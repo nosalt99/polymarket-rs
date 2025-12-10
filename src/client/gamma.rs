@@ -85,10 +85,7 @@ impl GammaClient {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_markets(
-        &self,
-        params: Option<GammaMarketParams>,
-    ) -> Result<Vec<GammaMarket>> {
+    pub async fn get_markets(&self, params: Option<GammaMarketParams>) -> Result<Vec<GammaMarket>> {
         let mut path = "/markets".to_string();
         if let Some(p) = params {
             path.push_str(&p.to_query_string());
@@ -197,6 +194,31 @@ impl GammaClient {
     /// ```
     pub async fn get_market_by_id(&self, id: &str) -> Result<GammaMarket> {
         let path = format!("/markets/{}", id);
+        self.http_client.get(&path, None).await
+    }
+
+    /// Get a specific market by its slug
+    ///
+    /// # Arguments
+    /// * `slug` - The slug of the market to retrieve (e.g., "will-donald-trump-win-the-2024-us-presidential-election")
+    ///
+    /// # Returns
+    /// A single market with full metadata
+    ///
+    /// # Example
+    /// ```no_run
+    /// use polymarket_rs::client::GammaClient;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> polymarket_rs::Result<()> {
+    /// let client = GammaClient::new("https://gamma-api.polymarket.com");
+    /// let market = client.get_market_by_slug("will-donald-trump-win-the-2024-us-presidential-election").await?;
+    /// println!("Market: {:?}", market.question);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_market_by_slug(&self, slug: &str) -> Result<GammaMarket> {
+        let path = format!("/markets/slug/{}", slug);
         self.http_client.get(&path, None).await
     }
 
