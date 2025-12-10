@@ -43,7 +43,7 @@ pub use types::{
 };
 
 // Re-export clients
-pub use client::{AuthenticatedClient, ClobClient, DataClient, TradingClient};
+pub use client::{AuthenticatedClient, ClobClient, DataClient, GammaClient, TradingClient};
 
 // Re-export websocket clients
 pub use websocket::{MarketWsClient, UserWsClient};
