@@ -8,6 +8,7 @@
 //! - Account and balance operations (authenticated)
 //! - Position tracking
 //! - Real-time WebSocket streaming for market data and user events
+//! - Relayer integration for gasless Safe wallet transactions
 //!
 //! ## Features
 //!
@@ -16,6 +17,7 @@
 //! - **Proper Error Handling**: No panics, comprehensive error types
 //! - **EIP-712 Signing**: Full support for Ethereum wallet signatures
 //! - **Decimal Precision**: Accurate decimal math for prices and amounts
+//! - **Relayer Client**: Gasless transactions through Polymarket's relayer infrastructure
 //!
 
 // Public modules
@@ -23,6 +25,7 @@ pub mod client;
 pub mod config;
 pub mod error;
 pub mod orders;
+pub mod relayer;
 pub mod request;
 pub mod signing;
 pub mod types;
@@ -47,6 +50,9 @@ pub use client::{AuthenticatedClient, ClobClient, DataClient, GammaClient, Tradi
 
 // Re-export websocket clients
 pub use websocket::{MarketWsClient, UserWsClient};
+
+// Re-export relayer client
+pub use relayer::{BuilderApiCreds, RelayerClient};
 
 // Re-export order builder
 pub use orders::OrderBuilder;
