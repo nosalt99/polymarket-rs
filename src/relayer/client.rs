@@ -345,28 +345,30 @@ impl RelayerClient {
 
     /// Get redeemable positions for a user from the data API
     ///
-    /// This fetches all positions for the user and filters for those that are:
-    /// 1. Redeemable (market has been resolved)
-    /// 2. Winning (curPrice >= 0.99, meaning the outcome won)
+    /// This fetches positions that are marked as redeemable by the API.
+    /// The API filters for positions in resolved markets that can be redeemed.
     ///
     /// # Arguments
     /// * `data_api_url` - The data API URL (e.g., "https://data-api.polymarket.com")
     /// * `user_address` - The user's wallet address (Safe wallet address)
     ///
     /// # Returns
-    /// A list of winning redeemable positions with their condition IDs and sizes
+    /// A list of redeemable positions with their condition IDs and sizes
     pub async fn get_redeemable_positions(
         &self,
         data_api_url: &str,
         user_address: &str,
     ) -> Result<Vec<RedeemablePosition>> {
-        let url = format!("{}/positions?user={}", data_api_url, user_address);
+        let url = format!(
+            "{}/positions?user={}&redeemable=true&sizeThreshold=0.1&limit=100&offset=0&sortBy=CURRENT&sortDirection=DESC",
+            data_api_url, user_address
+        );
         let response: Vec<PositionData> = self.http_client.get(&url).send().await?.json().await?;
 
         let redeemable: Vec<RedeemablePosition> = response
             .into_iter()
-            // Only include positions that are redeemable AND winning (curPrice >= 0.99)
-            .filter(|p| p.redeemable && p.cur_price.map(|price| price >= 0.99).unwrap_or(false))
+            // Only include positions with currentValue > 0 (winning positions worth redeeming)
+            .filter(|p| p.current_value > 0.0)
             .map(|p| RedeemablePosition {
                 condition_id: p.condition_id,
                 asset: p.asset,
@@ -374,6 +376,7 @@ impl RelayerClient {
                 outcome: p.outcome,
                 outcome_index: p.outcome_index,
                 title: p.title,
+                current_value: p.current_value,
             })
             .collect();
 

@@ -411,6 +411,9 @@ pub(crate) struct PositionData {
     /// Current price - 1.0 means winning, 0.0 means losing
     #[serde(rename = "curPrice", default)]
     pub cur_price: Option<f64>,
+    /// Current value of the position in USDC
+    #[serde(rename = "currentValue", default)]
+    pub current_value: f64,
 }
 
 /// A position that can be redeemed
@@ -428,4 +431,6 @@ pub struct RedeemablePosition {
     pub outcome_index: u32,
     /// The market title
     pub title: String,
+    /// Current value of the position in USDC
+    pub current_value: f64,
 }
