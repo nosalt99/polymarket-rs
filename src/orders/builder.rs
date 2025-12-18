@@ -80,7 +80,7 @@ impl OrderBuilder {
             Side::Buy => {
                 // For buy: maker_amount is USDC (max 2 decimals), taker_amount is tokens (max 4 decimals)
                 let raw_taker_amt = size.round_dp_with_strategy(4, ToZero);
-                let raw_maker_amt = (raw_taker_amt * raw_price).round_dp_with_strategy(2, ToZero);
+                let raw_maker_amt = (raw_taker_amt * raw_price).round_dp_with_strategy(4, ToZero);
                 (
                     decimal_to_token_u64(raw_maker_amt),
                     decimal_to_token_u64(raw_taker_amt),
@@ -89,7 +89,7 @@ impl OrderBuilder {
             Side::Sell => {
                 // For sell: maker_amount is tokens (max 4 decimals), taker_amount is USDC (max 2 decimals)
                 let raw_maker_amt = size.round_dp_with_strategy(4, ToZero);
-                let raw_taker_amt = (raw_maker_amt * raw_price).round_dp_with_strategy(2, ToZero);
+                let raw_taker_amt = (raw_maker_amt * raw_price).round_dp_with_strategy(4, ToZero);
                 (
                     decimal_to_token_u64(raw_maker_amt),
                     decimal_to_token_u64(raw_taker_amt),
@@ -303,7 +303,9 @@ mod tests {
         let builder = OrderBuilder::new(signer, None, None);
 
         // Test with tick_size 0.1 (price rounds to 1 decimal)
-        let round_config = ROUNDING_CONFIG.get(&Decimal::from_str("0.1").unwrap()).unwrap();
+        let round_config = ROUNDING_CONFIG
+            .get(&Decimal::from_str("0.1").unwrap())
+            .unwrap();
 
         let price = Decimal::from_str("0.999").unwrap();
         let size = Decimal::from_str("30.0").unwrap();
